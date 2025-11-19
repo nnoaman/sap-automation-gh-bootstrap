@@ -56,7 +56,6 @@ jobs:
         with:
           application_id:                         ${{ secrets.APPLICATION_ID }}
           application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
-          #organization:                          ${{ github.repository_owner }}
 
       - name:                                     Azure Login with Managed Identity
         if:                                       ${{ vars.USE_MSI == 'true' }}
@@ -123,7 +122,6 @@ jobs:
         with:
           application_id:                         ${{ secrets.APPLICATION_ID }}
           application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
-          #organization:                          ${{ github.repository_owner }}
 
       - name:                                     Azure Login with Service Principal to remove the self-hosted runner
         uses:                                     Azure/Login@v2
