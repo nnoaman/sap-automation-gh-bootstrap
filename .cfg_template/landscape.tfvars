@@ -41,6 +41,9 @@ admin_subnet_address_prefix="10.110.0.0/19"
 # db_subnet_address_prefix is a mandatory parameter if the subnets are not defined in the workload or if existing subnets are not used
 db_subnet_address_prefix="10.110.96.0/19"
 
+# web_subnet_address_prefix is a mandatory parameter if the subnets are not defined in the workload or if existing subnets are not used
+web_subnet_address_prefix="10.110.64.0/24"
+
 # app_subnet_address_prefix is a mandatory parameter if the subnets are not defined in the workload or if existing subnets are not used
 app_subnet_address_prefix="10.110.32.0/19"
 
@@ -69,7 +72,7 @@ enable_rbac_authorization_for_keyvault = true
 #########################################################################################
 
 # If defined provides the DNS label for the Virtual Network
-dns_label = "sdaf.contoso.net"
+dns_label = "@@DNS_LABEL@@"
 
 # If defined provides the list of DNS servers to attach to the Virtual NEtwork
 #dns_server_list = []

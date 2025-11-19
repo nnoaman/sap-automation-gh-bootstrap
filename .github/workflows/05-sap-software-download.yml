@@ -4,20 +4,20 @@
 # |                                                                            |
 # +------------------------------------4--------------------------------------*/
 
-name:                                        05 - Download SAP software
+name:                                             05 - Download SAP software
 
-run-name:                                    Download SAP software @${{ github.actor }}
+run-name:                                         Download SAP software @${{ github.actor }}
 
 on:
   workflow_dispatch:
     inputs:
       bom_base_name:
-        description:                         "Name of Bill of Materials (BoM)"
-        required:                            true
-        type:                                choice
+        description:                              "Name of Bill of Materials (BoM)"
+        required:                                 true
+        type:                                     choice
         options:
           - S42023SPS00_v88_0ms (HANA_2_00_088)
-          - S42023SPS00_v87_0ms (HANA_2_00_087) 
+          - S42023SPS00_v87_0ms (HANA_2_00_087)
           - NW750SPS20_v0008ms (HANA_2_00_088)
           - NW750SPS20_v0007ms (HANA_2_00_085)
           - S42023SPS00_v0006ms (HANA_2_00_085)
@@ -61,96 +61,96 @@ on:
           - ORACLE_19_00_ORA_MSID_v0002ms
           - MSSQLSRV_2019_v0001ms
           - SYBASE_1603SP15_v0003ms
-      
+
       control_plane_name:
-        description:                         "Control Plane Environment"
-        required:                            true
-        type:                                environment
+        description:                              "Control Plane Environment"
+        required:                                 true
+        type:                                     environment
       re_download:
-        description:                         "Re-download"
-        type:                                boolean
-        default:                             false
+        description:                              "Re-download"
+        type:                                     boolean
+        default:                                  false
       extra_params:
-          description:                       "Extra Parameters"
-          type:                              string
-          default:                           ""
+          description:                            "Extra Parameters"
+          type:                                   string
+          default:                                ""
 
 permissions:
-  contents:                                  write
-  id-token:                                  write
-  issues:                                    write
+  contents:                                       write
+  id-token:                                       write
+  issues:                                         write
 
 env:
-  TF_IN_AUTOMATION:                          true
-  TF_LOG:                                    ERROR
-  ANSIBLE_CORE_VERSION:                      '2.16'
-  TF_VERSION:                                '1.11.3'
+  TF_IN_AUTOMATION:                               ${{ vars.TF_IN_AUTOMATION }}
+  TF_LOG:                                         ${{ vars.TF_LOG }}
+  ANSIBLE_CORE_VERSION:                           ${{ vars.ANSIBLE_CORE_VERSION }}
+  TF_VERSION:                                     ${{ vars.TF_VERSION }}
 
 jobs:
   prepare_download:
-    name:                                    Prepare Download
-    environment:                             ${{ inputs.control_plane_name }}
-    runs-on:                                 self-hosted
+    name:                                         Prepare Download
+    environment:                                  ${{ inputs.control_plane_name }}
+    runs-on:                                      self-hosted
     container:
-      image:                                 ${{ vars.DOCKER_IMAGE }}
+      image:                                      ${{ vars.DOCKER_IMAGE }}
     steps:
-      - name:                                Configure Git Safe Directory
-        run:                                 |
+      - name:                                     Configure Git Safe Directory
+        run:                                      |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "/__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}"
 
-      - name:                                Checkout the code
-        uses:                                actions/checkout@v4
+      - name:                                     Checkout the code
+        uses:                                     actions/checkout@v4
         with:
-          fetch-depth:                       0
+          fetch-depth:                            0
 
-      - name:                                Get app token
-        id:                                  get_workflow_token
-        uses:                                peter-murray/workflow-application-token-action@v3
+      - name:                                     Get app token
+        id:                                       get_workflow_token
+        uses:                                     peter-murray/workflow-application-token-action@v3
         with:
-          application_id:                    ${{ secrets.APPLICATION_ID }}
-          application_private_key:           ${{ secrets.APPLICATION_PRIVATE_KEY }}
-          #organization:                     ${{ github.repository_owner }}
+          application_id:                         ${{ secrets.APPLICATION_ID }}
+          application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
+          #organization:                          ${{ github.repository_owner }}
 
-      - name:                                Azure Login with Managed Identity
-        if:                                  ${{ vars.USE_MSI == 'true' }}
-        uses:                                Azure/login@v2
+      - name:                                     Azure Login with Managed Identity
+        if:                                       ${{ vars.USE_MSI == 'true' }}
+        uses:                                     Azure/login@v2
         with:
-          auth-type:                         IDENTITY
-          tenant-id:                         ${{ vars.ARM_TENANT_ID }}
-          subscription-id:                   ${{ vars.ARM_SUBSCRIPTION_ID }}
+          auth-type:                              IDENTITY
+          tenant-id:                              ${{ vars.ARM_TENANT_ID }}
+          subscription-id:                        ${{ vars.ARM_SUBSCRIPTION_ID }}
 
-      - name:                                Azure Login with Service Principal
-        if:                                  ${{ vars.USE_MSI != 'true' }}
-        uses:                                Azure/Login@v2
+      - name:                                     Azure Login with Service Principal
+        if:                                       ${{ vars.USE_MSI != 'true' }}
+        uses:                                     Azure/Login@v2
         with:
-          creds:                             |
+          creds:                                  |
            {
-                                             "clientId": "${{ vars.ARM_CLIENT_ID }}",
-                                             "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
-                                             "subscriptionId": "${{ vars.ARM_SUBSCRIPTION_ID }}",
-                                             "tenantId": "${{ vars.ARM_TENANT_ID }}"
+                                                  "clientId": "${{ vars.ARM_CLIENT_ID }}",
+                                                  "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+                                                  "subscriptionId": "${{ vars.ARM_SUBSCRIPTION_ID }}",
+                                                  "tenantId": "${{ vars.ARM_TENANT_ID }}"
            }
 
-      - name:                                Prepare SAP software download
-        run:                                 |
+      - name:                                     Prepare SAP software download
+        run:                                      |
           cd ${SAP_AUTOMATION_REPO_PATH}
           chmod +x deploy/scripts/pipeline_scripts/04-sap-software-download-prepare.sh
           deploy/scripts/pipeline_scripts/04-sap-software-download-prepare.sh
         env:
-          APPLICATION_CONFIGURATION_NAME:    ${{ vars.APPLICATION_CONFIGURATION_NAME }}
-          APP_TOKEN:                         ${{ steps.get_workflow_token.outputs.token }}
-          BOM:                               ${{ inputs.bom_base_name }}
-          CONTROL_PLANE_NAME:                ${{ inputs.control_plane_name }}
-          DEPLOYER_KEYVAULT:                 ${{ vars.DEPLOYER_KEYVAULT }}
-          re_download:                       ${{ inputs.re_download }}
-          ARM_CLIENT_ID:                     ${{ vars.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET:                 ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID:               ${{ vars.ARM_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID:                     ${{ vars.ARM_TENANT_ID }}
-          SUSERNAME:                         ${{ vars.S_USERNAME }}
-          SPASSWORD:                         ${{ secrets.S_PASSWORD }}
-          USE_MSI:                           ${{ vars.USE_MSI }}
-          TF_VAR_use_spn:                    ${{ vars.USE_MSI }}
-          tf_version:                        ${{ env.TF_VERSION }}
-          EXTRA_PARAMETERS:                  ${{ inputs.extra_params }}
+          APPLICATION_CONFIGURATION_NAME:         ${{ vars.APPLICATION_CONFIGURATION_NAME }}
+          APP_TOKEN:                              ${{ steps.get_workflow_token.outputs.token }}
+          BOM:                                    ${{ inputs.bom_base_name }}
+          CONTROL_PLANE_NAME:                     ${{ inputs.control_plane_name }}
+          DEPLOYER_KEYVAULT:                      ${{ vars.DEPLOYER_KEYVAULT }}
+          re_download:                            ${{ inputs.re_download }}
+          ARM_CLIENT_ID:                          ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET:                      ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID:                    ${{ vars.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID:                          ${{ vars.ARM_TENANT_ID }}
+          SUSERNAME:                              ${{ vars.S_USERNAME }}
+          SPASSWORD:                              ${{ secrets.S_PASSWORD }}
+          USE_MSI:                                ${{ vars.USE_MSI }}
+          TF_VAR_use_spn:                         ${{ vars.USE_MSI }}
+          tf_version:                             ${{ env.TF_VERSION }}
+          EXTRA_PARAMETERS:                       ${{ inputs.extra_params }}

@@ -1,76 +1,71 @@
-name: 00 - Create environment
+name:                                              00 - Create Control Plane Environment
 
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment name"
-        required: true
-        default: "MGMT"
-      region:
-        description: "Deployment region"
-        required: true
-        default: "westeurope"
-      deployer_vnet:
-        description: "Deployer VNet"
-        required: true
-        default: "DEP01"
+      control_plane_name:
+        description:                               "Control Plane name"
+        required:                                  true
+        default:                                   "MGMT-WEEU-DEP01"
       use_msi:
-        description: "Use Managed Identity"
-        required: true
-        default: "false"
+        description:                               "Use Managed Identity"
+        required:                                  true
+        default:                                   "false"
       msi_id:
-        description: "Managed Identity ID"
-        required: false
-        default: ""
+        description:                               "Managed Identity ID"
+        required:                                  false
+        default:                                   ""
 
 permissions:
-  issues: write
-  contents: write
-  actions: write
-
+  issues:                                          write
+  contents:                                        write
+  actions:                                         write
 jobs:
   create_environment:
-    name: Create environment
-    runs-on: ubuntu-latest
+    name:                                          Create Environment
+    runs-on:                                       ubuntu-latest
     container:
-      image: ${{ vars.DOCKER_IMAGE }}
+      image:                                       ${{ vars.DOCKER_IMAGE }}
     steps:
-      - name: Get app token
-        id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@v3
+      - name:                                      Get app token
+        id:                                        get_workflow_token
+        uses:                                      peter-murray/workflow-application-token-action@v3
         with:
-          application_id: ${{ secrets.APPLICATION_ID }}
-          application_private_key: ${{ secrets.APPLICATION_PRIVATE_KEY }}
-          #organization: ${{ github.repository_owner }}
+          application_id:                          ${{ secrets.APPLICATION_ID }}
+          application_private_key:                 ${{ secrets.APPLICATION_PRIVATE_KEY }}
+          #organization:                           ${{ github.repository_owner }}
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name:                                      Checkout
+        uses:                                      actions/checkout@v4
         with:
-          token: ${{ steps.get_workflow_token.outputs.token }}
+          token:                                   ${{ steps.get_workflow_token.outputs.token }}
 
-      - name: Create GitHub Environment
+      - name:                                      Create GitHub Environment
         env:
-          GH_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
-        run: |
-          environment=${{ github.event.inputs.environment }}
-          region=${{ github.event.inputs.region }}
-          deployer_vnet=${{ github.event.inputs.deployer_vnet }}
+          GH_TOKEN:                                ${{ steps.get_workflow_token.outputs.token }}
+        run:                                       |
+          CONTROL_PLANE_NAME=${{ github.event.inputs.control_plane_name }}
+
+          environment=$(echo "${CONTROL_PLANE_NAME}" | awk -F'-' '{print $1}' | xargs)
+          region_code=$(echo "${CONTROL_PLANE_NAME}" | awk -F'-' '{print $2}' | xargs)
+          deployer_vnet=$(echo "${CONTROL_PLANE_NAME}" | awk -F'-' '{print $3}' | xargs)
+          region_code_lower=$(echo "${region_code}" | tr '[:upper:]' '[:lower:]')
           use_msi=${{ github.event.inputs.use_msi }}
           msi_id=${{ github.event.inputs.msi_id }}
 
           pushd /source/deploy/terraform/terraform-units/modules/sap_namegenerator
-          region_map=$(echo var.region_mapping.${region} | terraform console | tr -d '"')
+          region=$(echo "{ for k, v in var.region_mapping : v => k }[\"${region_code_lower}\"]" | terraform console | tr -d '"')
           popd
 
-          echo region_map: $region_map
-          echo region: $region
+          echo "Environment: $environment"
+          echo "Region Code: $region_code"
+          echo "Region: $region"
+          echo "Deployer VNet: $deployer_vnet"
 
-          environment_name=${environment}-${region_map}-${deployer_vnet}
-          deployer_name=${environment}-${region_map}-${deployer_vnet}-INFRASTRUCTURE
-          library_name=${environment}-${region_map}-SAP_LIBRARY
+          deployer_name=${CONTROL_PLANE_NAME}-INFRASTRUCTURE
+          library_name=${environment}-${region_code}-SAP_LIBRARY
 
-          url_to_call=/repos/${{ github.repository }}/environments/${environment_name^^}
+          url_to_call=/repos/${{ github.repository }}/environments/${CONTROL_PLANE_NAME^^}
 
           _=$(gh api \
             -X PUT \
@@ -93,9 +88,12 @@ jobs:
               WORKSPACES/DEPLOYER/${deployer_name^^}/${deployer_name^^}.tfvars
           fi
 
+          dns_label=$(echo "${CONTROL_PLANE_NAME}" | tr '[:upper:]' '[:lower:]' | tr '-' '.').contoso.net
+
           cat .cfg_template/library.tfvars \
             | sed "s|@@ENV@@|${environment}|g" \
             | sed "s|@@REGION@@|${region}|g" \
+            | sed "s|@@DNS_LABEL@@|${dns_label}|g" \
             > WORKSPACES/LIBRARY/${library_name^^}/${library_name^^}.tfvars
 
           # Update the environment in the issue-closed workflow

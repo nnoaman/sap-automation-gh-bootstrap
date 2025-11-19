@@ -5,7 +5,7 @@ environment="@@ENV@@"
 location="@@REGION@@"
 
 # Defines the DNS suffix for the resources
-dns_label = "sdaf.contoso.net"
+dns_label = "@@DNS_LABEL@@"
 
 # use_private_endpoint defines that the storage accounts and key vaults have private endpoints enabled
 use_private_endpoint = true
