@@ -4,15 +4,11 @@ name:                                             02 - Create workload environme
 on:
   workflow_dispatch:
     inputs:
-      control_plane_name:
-        description:                              "Control Plane Name configuration name, use the following syntax: ENV-LOCA-VNET"
-        required:                                 true
-        type:                                     environment
       workload_environment:
-        description:                              "Workload environment (DEV, QA, PRD, ...)"
+        description:                              "Workload zone name"
         required:                                 true
         type:                                     string
-        default:                                  TEST
+        default:                                  TEST-SECE-SAP01
       region:
         description:                              "Azure region to deploy the workload environment to. Use the region code, e.g. 'WEEU' for westeurope."
         required:                                 true
@@ -70,6 +66,10 @@ on:
         required:                                 true
         type:                                     string
         default:                                  SAP01
+      control_plane_name:
+        description:                              "Control Plane Name"
+        required:                                 true
+        type:                                     environment
 
 permissions:
   issues:                                         write
