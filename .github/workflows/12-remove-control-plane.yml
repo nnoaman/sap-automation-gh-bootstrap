@@ -40,8 +40,15 @@ jobs:
     container:
       image:                                      ${{ vars.DOCKER_IMAGE }}
     steps:
-      - name:                                     Checkout the code
-        uses:                                     actions/checkout@v4
+      - name:                                     Get app token
+        id:                                       get_workflow_token
+        uses:                                     actions/create-github-app-token@v2
+        with:
+          app-id:                                 ${{ secrets.APPLICATION_ID }}
+          private-key:                            ${{ secrets.APPLICATION_PRIVATE_KEY }}
+
+      - name:                                     Checkout repository
+        uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth:                            0
           token:                                 ${{ secrets.GITHUB_TOKEN }}
@@ -49,13 +56,6 @@ jobs:
         run:                                      |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "/__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}"
-
-      - name:                                     Get app token
-        id:                                       get_workflow_token
-        uses:                                     peter-murray/workflow-application-token-action@v4
-        with:
-          application_id:                         ${{ secrets.APPLICATION_ID }}
-          application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
 
       - name:                                     Azure Login with Managed Identity
         if:                                       ${{ vars.USE_MSI == 'true' }}
@@ -105,8 +105,8 @@ jobs:
       image:                                      ${{ vars.DOCKER_IMAGE }}
 
     steps:
-      - name:                                     Checkout the code
-        uses:                                     actions/checkout@v4
+      - name:                                     Checkout repository
+        uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth:                            0
           token:                                  ${{ secrets.GITHUB_TOKEN }}
@@ -118,12 +118,21 @@ jobs:
 
       - name:                                     Get app token
         id:                                       get_workflow_token
-        uses:                                     peter-murray/workflow-application-token-action@v4
+        uses:                                     actions/create-github-app-token@v2
         with:
-          application_id:                         ${{ secrets.APPLICATION_ID }}
-          application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
+          app-id:                                 ${{ secrets.APPLICATION_ID }}
+          private-key:                            ${{ secrets.APPLICATION_PRIVATE_KEY }}
 
-      - name:                                     Azure Login with Service Principal to remove the self-hosted runner
+      - name:                                     Azure Login with Service Principal
+        if:                                       ${{ vars.USE_MSI != 'true' }}
+        uses:                                     Azure/Login@v2
+        with:
+          client-id:                              ${{ vars.ARM_CLIENT_ID }}
+          tenant-id:                              ${{ vars.ARM_TENANT_ID }}
+          subscription-id:                        ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name:                                     Azure Login with initial Service Principal to remove the self-hosted runner
+        if:                                       ${{ vars.USE_MSI == 'true' }}
         uses:                                     Azure/Login@v2
         with:
           client-id:                              ${{ vars.ARM_SPN_CLIENT_ID }}
