@@ -49,8 +49,15 @@ jobs:
       msi_id:                                     ${{ steps.prepare_control_plane.outputs.msi_id }}
 
     steps:
-      - name:                                     Checkout the code
-        uses:                                     actions/checkout@v4
+      - name:                                     Get app token
+        id:                                       get_workflow_token
+        uses:                                     actions/create-github-app-token@v1
+        with:
+          app-id:                                 ${{ secrets.APPLICATION_ID }}
+          private-key:                            ${{ secrets.APPLICATION_PRIVATE_KEY }}
+
+      - name:                                     Checkout repository
+        uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth:                            0
           token:                                  ${{ secrets.GITHUB_TOKEN }}
@@ -59,13 +66,6 @@ jobs:
         run:                                      |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "/__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}"
-
-      - name:                                     Get app token
-        id:                                       get_workflow_token
-        uses:                                     peter-murray/workflow-application-token-action@v4
-        with:
-          application_id:                         ${{ secrets.APPLICATION_ID }}
-          application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
 
       - name:                                     Azure Login with Service Principal
         if:                                       ${{ vars.USE_MSI != 'true' }}
@@ -117,8 +117,8 @@ jobs:
       image:                                      ${{ vars.DOCKER_IMAGE }}
 
     steps:
-      - name:                                     Checkout the code
-        uses:                                     actions/checkout@v4
+      - name:                                     Checkout repository
+        uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           token:                                  ${{ secrets.GITHUB_TOKEN }}
           fetch-depth:                            0
@@ -132,10 +132,10 @@ jobs:
 
       - name:                                     Get app token
         id:                                       get_workflow_token
-        uses:                                     peter-murray/workflow-application-token-action@v4
+        uses:                                     actions/create-github-app-token@v1
         with:
-          application_id:                         ${{ secrets.APPLICATION_ID }}
-          application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
+          app-id:                                 ${{ secrets.APPLICATION_ID }}
+          private-key:                            ${{ secrets.APPLICATION_PRIVATE_KEY }}
 
       - name:                                     Azure Login with Managed Identity
         if:                                       ${{ vars.USE_MSI == 'true' }}
@@ -206,8 +206,8 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "/__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}"
 
-      - name:                                     Checkout the code
-        uses:                                     actions/checkout@v4
+      - name:                                     Checkout repository
+        uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth:                            0
           ref:                                    ${{ github.ref }}
@@ -216,10 +216,10 @@ jobs:
 
       - name:                                     Get app token
         id:                                       get_workflow_token
-        uses:                                     peter-murray/workflow-application-token-action@v4
+        uses:                                     actions/create-github-app-token@v1
         with:
-          application_id:                         ${{ secrets.APPLICATION_ID }}
-          application_private_key:                ${{ secrets.APPLICATION_PRIVATE_KEY }}
+          app-id:                                 ${{ secrets.APPLICATION_ID }}
+          private-key:                            ${{ secrets.APPLICATION_PRIVATE_KEY }}
 
       - name:                                     Azure Login with Managed Identity
         if:                                       ${{ vars.USE_MSI == 'true' }}
@@ -275,13 +275,13 @@ jobs:
     runs-on:                                      ${{ needs.prepare-deployer.outputs.this_agent || 'ubuntu-latest' }}
 
     steps:
-      - name:                                     Checkout Repository
-        uses:                                     actions/checkout@v4
+      - name:                                     Checkout repository
+        uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           path:                                   sap-automation
 
       - name:                                     Setup .NET Core
-        uses:                                     actions/setup-dotnet@v3
+        uses:                                     actions/setup-dotnet@v4
         with:
           dotnet-version:                         '7.0.x'
 
@@ -312,7 +312,7 @@ jobs:
           subscription-id:                        ${{ vars.ARM_SUBSCRIPTION_ID }}
 
       - name:                                     Deploy Web App
-        uses:                                     azure/webapps-deploy@v2
+        uses:                                     azure/webapps-deploy@v3
         with:
           app-name:                               ${{ needs.deploy-control-plane.outputs.APPSERVICE_NAME }}
           package:                                webapp.zip
