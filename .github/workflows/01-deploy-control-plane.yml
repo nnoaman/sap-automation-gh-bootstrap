@@ -11,26 +11,26 @@ on:
   workflow_dispatch:
     inputs:
       control_plane_name:
-        description:                              'Control Plane configuration name, use the following syntax: ENV-LOCA-VNET'
+        description:                              'Control Plane configuration name'
         required:                                 true
         type:                                     environment
       use_webapp:
-        description:                              'Deploy the configuration web application infrastructure'
+        description:                              'Deploy the Web Application infrastructure'
         required:                                 false
         type:                                     boolean
         default:                                  true
       deploy_webapp_software:
-        description:                              'Deploy the configuration web application software'
+        description:                              'Deploy the Web Application software'
         required:                                 false
         type:                                     boolean
         default:                                  true
       force_reset:
-        description:                              'Force a re-install - may require multiple re-runs'
+        description:                              'Force a re-install - Multiple executions may be required'
         required:                                 false
         type:                                     boolean
         default:                                  false
       test:
-        description:                              'Only run Terraform plan'
+        description:                              'Perform a dry-run validation - Only run Terraform plan'
         required:                                 false
         type:                                     boolean
         default:                                  false
@@ -269,6 +269,7 @@ jobs:
           TF_VAR_github_app_token:                ${{ steps.get_workflow_token.outputs.token }}
           TF_VAR_subscription_id:                 ${{ vars.ARM_SUBSCRIPTION_ID }}
           TF_VAR_tf_version:                      ${{ env.TF_VERSION }}
+          TF_VAR_use_webapp:                      ${{ inputs.use_webapp }}
           USE_MSI:                                ${{ vars.USE_MSI }}
           ZONE:                                   ${{ inputs.control_plane_name }}
           tf_version:                             ${{ env.TF_VERSION }}
