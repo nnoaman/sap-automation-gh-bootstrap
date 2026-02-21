@@ -251,6 +251,7 @@ jobs:
         env:
           APPLICATION_CONFIGURATION_NAME:         ${{ vars.APPLICATION_CONFIGURATION_NAME }}
           APP_REGISTRATION_APP_ID:                ${{ vars.APP_REGISTRATION_APP_ID }}
+          APP_REGISTRATION_OBJECTID:              ${{ vars.APP_REGISTRATION_OBJECTID }}
           APP_TOKEN:                              ${{ steps.get_workflow_token.outputs.token }}
           ARM_CLIENT_ID:                          ${{ vars.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET:                      ${{ secrets.ARM_CLIENT_SECRET }}
