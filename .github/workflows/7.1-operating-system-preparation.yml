@@ -112,6 +112,11 @@ jobs:
           app-id:                                 ${{ secrets.APPLICATION_ID }}
           private-key:                            ${{ secrets.APPLICATION_PRIVATE_KEY }}
 
+      - name:                                     Configure Git Safe Directory
+        run:                                      |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "/__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}"
+
       - name:                                     Checkout repository
         uses:                                     actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
